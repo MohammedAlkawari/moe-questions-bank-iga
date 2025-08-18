@@ -30,7 +30,7 @@ export async function regenerate(event: APIGatewayProxyEvent) {
   const examID = data.examID;
   const exam = data.examContent;
   const contributors = data.contributors;
-  const discription = data.description;
+  const description = data.description;
 
   try {
       const prompt = `
@@ -40,7 +40,7 @@ export async function regenerate(event: APIGatewayProxyEvent) {
       ${JSON.stringify(exam, null, 2)}
       
       📝 User's feedback and instructions:
-      ${JSON.stringify(discription)}
+      ${JSON.stringify(description)}
       
       Instructions:
       - Apply the feedback precisely to the relevant section or question.
