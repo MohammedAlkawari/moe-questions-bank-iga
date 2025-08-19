@@ -351,16 +351,24 @@ const ExamForm: React.FC = () => {
       contributors: newContributers, // Current user as contributor
     };
     */
-    // استخراج أرقام السكاشن اللي فيها feedback
-    const sectionIndexes = cleanedFeedback.map(f => {
-      const match = f.section.match(/section-(\d+)/);
-      return match ? parseInt(match[1]) : null;
-    }).filter(index => index !== null);
+    if (!examContent) {
+      console.error("examContent is null!");
+      return;
+    }
     
-    // إنشاء نسخة مصغرة من examContent فيها فقط السكاشن المطلوبة
+    const sectionIndexes = new Set<number>();
+    cleanedFeedback.forEach(f => {
+      const match = f.section.match(/section-(\d+)/);
+      if (match) {
+        sectionIndexes.add(parseInt(match[1]));
+      }
+    });
+    
     const reducedExamContent = {
       ...examContent,
-      sections: examContent.sections.filter((_, i) => sectionIndexes.includes(i)),
+      sections: examContent.sections.filter((_section: any, i: number) =>
+        sectionIndexes.has(i)
+      ),
     };
 
   const requestBody = {
@@ -371,7 +379,6 @@ const ExamForm: React.FC = () => {
     
     // ✅ طباعة واضحة لمراجعة الشكل النهائي قبل الإرسال
     console.log("📦 Final requestBody to be sent:", JSON.stringify(requestBody, null, 2));
-    console.log("📦 reducedExamContent:", JSON.stringify(reducedExamContent, null, 2));
 
   
     try {
