@@ -355,7 +355,8 @@ const ExamForm: React.FC = () => {
   const requestBody = {
     examID: id!,
     examContent: examContent, // محتوى الامتحان الحالي من الـ state
-    description: cleanedFeedback.map(f => `${f.section}: ${f.feedback}`).join(" | "), // أو أي
+    description: cleanedFeedback.map(f => `${f.section}: ${f.feedback}`).join(" | "), 
+    };
     
     // ✅ طباعة واضحة لمراجعة الشكل النهائي قبل الإرسال
     console.log("📦 Final requestBody to be sent:", JSON.stringify(requestBody, null, 2));
