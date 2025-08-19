@@ -30,7 +30,7 @@ export async function regenerate(event: APIGatewayProxyEvent) {
 
   const examID = data.examID;
   const exam = data.examContent;
-  const contributors = data.contributors;
+  const contributers = data.contributers;
   const description = data.description;
 
   console.log("📦 examID:", examID);
@@ -104,10 +104,10 @@ export async function regenerate(event: APIGatewayProxyEvent) {
       new UpdateCommand({
         TableName: tableName,
         Key: { examID },
-        UpdateExpression: "SET examContent = :examContent, contributors = :contributors",
+        UpdateExpression: "SET examContent = :examContent, contributers = :contributers",
         ExpressionAttributeValues: {
           ":examContent": parsedExamContent,
-          ":contributors": contributors,
+          ":contributers": contributers,
         },
       })
     );
