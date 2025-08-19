@@ -25,7 +25,10 @@ export async function regenerate(event: APIGatewayProxyEvent) {
   }
 
   data = JSON.parse(event.body);
-  console.log(event.body);
+  console.log("📦 examID:", examID);
+  console.log("📦 examContent:", JSON.stringify(exam, null, 2));
+  console.log("📦 description:", JSON.stringify(description, null, 2));
+
 
   const examID = data.examID;
   const exam = data.examContent;
