@@ -371,6 +371,8 @@ const ExamForm: React.FC = () => {
     
     // ✅ طباعة واضحة لمراجعة الشكل النهائي قبل الإرسال
     console.log("📦 Final requestBody to be sent:", JSON.stringify(requestBody, null, 2));
+    console.log("📦 reducedExamContent:", JSON.stringify(reducedExamContent, null, 2));
+
   
     try {
       setLoading(true);
