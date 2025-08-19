@@ -351,10 +351,21 @@ const ExamForm: React.FC = () => {
       contributors: newContributers, // Current user as contributor
     };
     */
+    // استخراج أرقام السكاشن اللي فيها feedback
+    const sectionIndexes = cleanedFeedback.map(f => {
+      const match = f.section.match(/section-(\d+)/);
+      return match ? parseInt(match[1]) : null;
+    }).filter(index => index !== null);
+    
+    // إنشاء نسخة مصغرة من examContent فيها فقط السكاشن المطلوبة
+    const reducedExamContent = {
+      ...examContent,
+      sections: examContent.sections.filter((_, i) => sectionIndexes.includes(i)),
+    };
 
   const requestBody = {
     examID: id!,
-    examContent: examContent, // محتوى الامتحان الحالي من الـ state
+    examContent: reducedExamContent, // محتوى الامتحان الحالي من الـ state
     description: cleanedFeedback.map(f => `${f.section}: ${f.feedback}`).join(" | "), 
     };
     
