@@ -51,7 +51,7 @@ const ExamForm: React.FC = () => {
   const [_semester, setSemester] = useState("");
   const [createdBy, setCreator] = useState("");
   const [creationDate, setDate] = useState("");
-  const [contributers, setContributers] = useState("");
+  const [contributors, setContributors] = useState("");
   const [examState, setExamState] = useState("");
   const [_responseResult, _setResponseResult] = useState<string>(""); // State to store the API response
   //const [examContent, setExamContent] = useState<any>(null); // Store exam content as JSON
