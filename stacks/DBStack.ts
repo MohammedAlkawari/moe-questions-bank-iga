@@ -21,7 +21,7 @@ export function DBStack({ stack, app }: StackContext) {
       examSemester: "string",
       createdBy: "string",
       creationDate: "string",
-      contributers: "string",
+      contributors: "string",
       examContent: "string",
       examDuration: "string",
       examTotalMark: "number",
