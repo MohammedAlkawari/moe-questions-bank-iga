@@ -614,7 +614,7 @@ const ExamForm: React.FC = () => {
                   textOverflow: "ellipsis", // Adds ellipsis when content overflows
                 }}
               >
-                {contributers}
+                {contributors}
               </div>
             </div>
           </div>
