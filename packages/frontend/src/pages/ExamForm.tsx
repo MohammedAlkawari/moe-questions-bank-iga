@@ -332,11 +332,11 @@ const ExamForm: React.FC = () => {
     }
     
     let currentUser = await getCurrentUserEmail();
-    let newContributers = contributers;
+    let newContributors = contributors;
     if (currentUser) {
-      if (!contributers.includes(currentUser)) {
-        newContributers += " " + currentUser;
-        console.log("Contributors: " + newContributers)
+      if (!contributors.includes(currentUser)) {
+        newContributors += " " + currentUser;
+        console.log("Contributors: " + newContributors)
       }
     }
   
