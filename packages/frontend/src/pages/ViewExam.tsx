@@ -237,7 +237,7 @@ const ViewExam: React.FC = () => {
       setSemester(response.examSemester || "");
       setCreator(response.createdBy || "");
       setDate(response.creationDate || "");
-      setContributers(String(response.contributors || ""));
+      setContributors(String(response.contributors || ""));
       setDuration(response.examDuration || "");
       setMark(response.examMark || "");
       setExamState(response.examState || "");
@@ -859,7 +859,7 @@ const ViewExam: React.FC = () => {
                   textOverflow: "ellipsis", // Adds ellipsis when content overflows
                 }}
               >
-                {contributers}
+                {contributors}
               </div>
             </div>
           </div>
