@@ -104,10 +104,10 @@ export async function regenerate(event: APIGatewayProxyEvent) {
       new UpdateCommand({
         TableName: tableName,
         Key: { examID },
-        UpdateExpression: "SET examContent = :examContent, contributers = :contributers",
+        UpdateExpression: "SET examContent = :examContent, contributors = :contributors",
         ExpressionAttributeValues: {
           ":examContent": parsedExamContent,
-          ":contributers": contributers,
+          ":contributors": contributors,
         },
       })
     );
