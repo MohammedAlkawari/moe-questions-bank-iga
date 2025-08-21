@@ -373,7 +373,7 @@ const ExamForm: React.FC = () => {
 
   const requestBody = {
     examID: id!,
-    examContent: reducedExamContent, // محتوى الامتحان الحالي من الـ state
+    examContent: cleanedFeedback, //reducedExamContent, 
     description: cleanedFeedback.map(f => `${f.section}: ${f.feedback}`).join(" | "), 
     contributors: newContributors,
     };
