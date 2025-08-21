@@ -4,7 +4,7 @@ import {
 } from "@aws-sdk/client-bedrock-runtime";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, UpdateCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
 const client = new BedrockRuntimeClient({ region: "us-east-1" });
 
@@ -101,55 +101,26 @@ export async function regenerate(event: APIGatewayProxyEvent) {
       };
     }
 
-    // ✅ 1. Get the existing full exam from DB
-    const existing = await dynamo.send(
-      new GetCommand({
-        TableName: tableName,
-        Key: { examID },
-      })
-    );
-    
-    const originalExamContent = existing.Item?.examContent;
-    
-    if (!originalExamContent || !originalExamContent.sections) {
-      return {
-        statusCode: 404,
-        body: JSON.stringify({ error: true, message: "Original exam not found." }),
-      };
-    }
-    
-    // ✅ 2. Replace only the modified sections
-    const updatedSections = originalExamContent.sections.map((section: any, index: number) => {
-      const updatedSection = parsedExamContent.sections.find((s: any, i: number) => i === index);
-      return updatedSection ?? section;
-    });
-    
-    const mergedExamContent = {
-      ...originalExamContent,
-      sections: updatedSections,
-    };
-    
-    // ✅ 3. Update full examContent (merged)
+    // ✅ Only now update the DynamoDB table
     await dynamo.send(
       new UpdateCommand({
         TableName: tableName,
         Key: { examID },
         UpdateExpression: "SET examContent = :examContent, contributors = :contributors",
         ExpressionAttributeValues: {
-          ":examContent": mergedExamContent,
+          ":examContent": parsedExamContent,
           ":contributors": contributors,
         },
       })
     );
-    
+
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        updatedExamContent: mergedExamContent,
+        updatedExamContent: parsedExamContent,
       }),
     };
-
   } catch (error) {
     console.error("Error:", error);
     return {
