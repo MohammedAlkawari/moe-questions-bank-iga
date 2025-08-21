@@ -363,14 +363,14 @@ const ExamForm: React.FC = () => {
         sectionIndexes.add(parseInt(match[1]));
       }
     });
-    
+    /*
     const reducedExamContent = {
       ...examContent,
       sections: examContent.sections.filter((_section: any, i: number) =>
         sectionIndexes.has(i)
       ),
     };
-
+    */
   const requestBody = {
     examID: id!,
     examContent: examContent, //reducedExamContent, 
