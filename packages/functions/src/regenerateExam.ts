@@ -4,7 +4,7 @@ import {
 } from "@aws-sdk/client-bedrock-runtime";
 import { APIGatewayProxyEvent } from "aws-lambda";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, UpdateCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 
 const client = new BedrockRuntimeClient({ region: "us-east-1" });
 
