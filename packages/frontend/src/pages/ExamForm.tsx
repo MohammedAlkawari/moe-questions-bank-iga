@@ -375,6 +375,7 @@ const ExamForm: React.FC = () => {
     examID: id!,
     examContent: reducedExamContent, // محتوى الامتحان الحالي من الـ state
     description: cleanedFeedback.map(f => `${f.section}: ${f.feedback}`).join(" | "), 
+    contributors: newContributors,
     };
     
     // ✅ طباعة واضحة لمراجعة الشكل النهائي قبل الإرسال
