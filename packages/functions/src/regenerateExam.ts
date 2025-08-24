@@ -31,18 +31,19 @@ export async function regenerate(event: APIGatewayProxyEvent) {
   const exam = data.examContent;
   const contributors = data.contributors;
   const description = data.description;
+  const sectionIndexes = data.sectionIndexes;
 
   console.log("📦 examID:", examID);
   console.log("📦 examContent:", JSON.stringify(exam, null, 2));
   console.log("📦 description:", JSON.stringify(description, null, 2));
   console.log("📦 contributors:", contributors);
   
-  if (!examID || sectionId === undefined || !feedback) {
+  if (!examID || sectionIndexes === undefined || !feedback) {
     return {
       statusCode: 400,
       body: JSON.stringify({
         error: true,
-        message: "examID, sectionId, and feedback are required",
+        message: "examID, sectionIndexes, and feedback are required",
       }),
     };
   }
@@ -67,17 +68,17 @@ export async function regenerate(event: APIGatewayProxyEvent) {
       ? JSON.parse(Item.examContent)
       : Item.examContent;
 
-    if (!exam.sections || !exam.sections[sectionId]) {
+    if (!exam.sections || !exam.sections[sectionIndexes]) {
       return {
         statusCode: 400,
         body: JSON.stringify({
           error: true,
-          message: `Invalid sectionId: ${sectionId}`,
+          message: `Invalid sectionIndexes: ${sectionIndexes}`,
         }),
       };
     }
 
-    const targetSection = exam.sections[sectionId];
+    const targetSection = exam.sections[sectionIndexes];
 
     // ✅ 2. Build prompt only for that section
     const prompt = `
