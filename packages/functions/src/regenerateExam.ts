@@ -38,12 +38,12 @@ export async function regenerate(event: APIGatewayProxyEvent) {
   console.log("📦 description:", JSON.stringify(description, null, 2));
   console.log("📦 contributors:", contributors);
   
-  if (!examID || sectionIndexes === undefined || !feedback) {
+  if (!examID || sectionIndexes === undefined || !description) {
     return {
       statusCode: 400,
       body: JSON.stringify({
         error: true,
-        message: "examID, sectionIndexes, and feedback are required",
+        message: "examID, sectionIndexes, and description are required",
       }),
     };
   }
@@ -82,16 +82,16 @@ export async function regenerate(event: APIGatewayProxyEvent) {
 
     // ✅ 2. Build prompt only for that section
     const prompt = `
-    You are an AI exam editor. Apply the user's feedback to the following section only.
+    You are an AI exam editor. Apply the user's description to the following section only.
 
     💡 Section to be modified (JSON):
     ${JSON.stringify(targetSection, null, 2)}
 
-    📝 User's feedback and instructions:
-    ${JSON.stringify(feedback)}
+    📝 User's description and instructions:
+    ${JSON.stringify(description)}
 
     Instructions:
-    - Apply the feedback precisely to this section.
+    - Apply the description(feedback) precisely to this section.
     - Do NOT modify any other part of the exam.
     - Return ONLY the updated section object (valid JSON).
     `;
