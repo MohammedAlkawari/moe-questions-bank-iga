@@ -27,8 +27,16 @@ export async function regenerate(event: APIGatewayProxyEvent) {
   }
 
   const data = JSON.parse(event.body);
-  const { examID, sectionId, feedback, contributors } = data;
+  const examID = data.examID;
+  const exam = data.examContent;
+  const contributors = data.contributors;
+  const description = data.description;
 
+  console.log("📦 examID:", examID);
+  console.log("📦 examContent:", JSON.stringify(exam, null, 2));
+  console.log("📦 description:", JSON.stringify(description, null, 2));
+  console.log("📦 contributors:", contributors);
+  
   if (!examID || sectionId === undefined || !feedback) {
     return {
       statusCode: 400,
