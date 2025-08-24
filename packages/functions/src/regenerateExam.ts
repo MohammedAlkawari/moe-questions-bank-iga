@@ -101,6 +101,40 @@ export async function regenerate(event: APIGatewayProxyEvent) {
       };
     }
 
+        // ✅ Get original exam from Dynamo
+    const existing = await dynamo.send(
+      new GetCommand({ TableName: tableName, Key: { examID } })
+    );
+    const originalExamContent = existing.Item?.examContent;
+    
+    // ✅ Identify which sections were sent in the request (from reducedExamContent)
+    const updatedSections = exam.sections || []; // جاي من request body
+    
+    // ✅ Replace only those sections
+    const mergedSections = originalExamContent.sections.map((section: any, i: number) => {
+      const updated = updatedSections.find((s: any, idx: number) => idx === i);
+      return updated ? updated : section;
+    });
+    
+    // ✅ Keep the rest of the exam (parts, metadata…)
+    const mergedExamContent = {
+      ...originalExamContent,
+      sections: mergedSections,
+    };
+    
+    // ✅ Save back to Dynamo
+    await dynamo.send(
+      new UpdateCommand({
+        TableName: tableName,
+        Key: { examID },
+        UpdateExpression: "SET examContent = :examContent, contributors = :contributors",
+        ExpressionAttributeValues: {
+          ":examContent": mergedExamContent,
+          ":contributors": contributors,
+        },
+      })
+    );
+
     // ✅ Only now update the DynamoDB table
     await dynamo.send(
       new UpdateCommand({
