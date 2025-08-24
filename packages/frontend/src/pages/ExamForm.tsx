@@ -376,10 +376,7 @@ const ExamForm: React.FC = () => {
     examContent: reducedExamContent, // محتوى الامتحان الحالي من الـ state
     description: cleanedFeedback.map(f => `${f.section}: ${f.feedback}`).join(" | "), 
     contributors: newContributors,
-    sections: cleanedFeedback.map((f, i) => {
-    const match = f.section.match(/section-(\d+)/);
-    return {
-      sectionIndexes: match ? parseInt(match[1]) : i
+    sectionIndexes:sectionIndexes,
     };
     
     // ✅ طباعة واضحة لمراجعة الشكل النهائي قبل الإرسال
