@@ -351,29 +351,9 @@ const ExamForm: React.FC = () => {
       contributors: newContributers, // Current user as contributor
     };
     */
-    if (!examContent) {
-      console.error("examContent is null!");
-      return;
-    }
-    
-    const sectionIndexes = new Set<number>();
-    cleanedFeedback.forEach(f => {
-      const match = f.section.match(/section-(\d+)/);
-      if (match) {
-        sectionIndexes.add(parseInt(match[1]));
-      }
-    });
-    
-    const reducedExamContent = {
-      ...examContent,
-      sections: examContent.sections.filter((_section: any, i: number) =>
-        sectionIndexes.has(i)
-      ),
-    };
     
   const requestBody = {
     examID: id!,
-    //examContent:reducedExamContent, 
     description: cleanedFeedback, 
     contributors: newContributors,
     };
