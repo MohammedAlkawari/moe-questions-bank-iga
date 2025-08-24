@@ -132,7 +132,7 @@ export async function regenerate(event: APIGatewayProxyEvent) {
     }
 
     // ✅ 4. Replace section in exam
-    exam.sections[sectionId] = updatedSection;
+    exam.sections[sectionIndexes ] = updatedSection;
 
     // ✅ 5. Save back to DynamoDB
     await dynamo.send(
