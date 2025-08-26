@@ -364,19 +364,11 @@ const ExamForm: React.FC = () => {
       }
     });
     
-    const reducedExamContent = {
-      ...examContent,
-      sections: examContent.sections.filter((_section: any, i: number) =>
-        sectionIndexes.has(i)
-      ),
-    };
-
   const requestBody = {
     examID: id!,
-    examContent: reducedExamContent, // محتوى الامتحان الحالي من الـ state
-    description: cleanedFeedback.map(f => `${f.section}: ${f.feedback}`).join(" | "), 
+    feedback: cleanedFeedback,
     contributors: newContributors,
-    sectionIndexes:sectionIndexes,
+    sectionIndexes: Array.from(sectionIndexes),
     };
     
     // ✅ طباعة واضحة لمراجعة الشكل النهائي قبل الإرسال
