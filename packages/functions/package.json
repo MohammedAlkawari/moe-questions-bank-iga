@@ -6,9 +6,6 @@
     "test": "sst bind vitest",
     "typecheck": "tsc -noEmit"
   },
-  "dependencies": {
-    "@aws-sdk/client-bedrock-agent": "^3.706.0"
-  },
   "devDependencies": {
     "@types/node": "^20.6.0",
     "@types/aws-lambda": "^8.10.120",
