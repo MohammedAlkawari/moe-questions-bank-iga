@@ -1,22 +1,24 @@
-import { Bucket, StackContext } from "sst/constructs";
-import s3 from "aws-cdk-lib/aws-s3";
+import { Bucket, StackContext, Function } from "sst/constructs";
 
 export function StorageStack({ stack }: StackContext) {
-  // Create the S3 bucket and set up notifications
-  //const materialsBucket = new Bucket(stack, "MaterialsBucket", {});
+  // Create a function to sync the knowledge base
+  const syncKnowledgeBase = new Function(stack, "SyncKnowledgeBase", {
+    handler: "packages/functions/src/SyncKB.handler",
+    permissions: ["bedrock:StartIngestionJob"],
+    // Environment variables will be added in the Bedrock stack to avoid a circular dependency
+  });
+
+  // Create the S3 bucket and attach the notification
   const materialsBucket = new Bucket(stack, "MaterialsBucket", {
-      cdk: {
-        bucket: new s3.Bucket(stack, "MaterialsBucketBucket", {
-          encryption: s3.BucketEncryption.S3_MANAGED,
-          publicReadAccess: false,
-      })
-      }
-    })
+    notifications: {
+      sync: syncKnowledgeBase,
+    },
+  });
     
   // Outputs
   stack.addOutputs({
     BucketName: materialsBucket.bucketName,
   });
 
-  return { materialsBucket };
+  return { materialsBucket, syncKnowledgeBase };
 }
