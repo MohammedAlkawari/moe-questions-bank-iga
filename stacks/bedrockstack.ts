@@ -1,36 +1,18 @@
-import { StackContext, Function, use, Stack } from "sst/constructs";
+import { StackContext, use, Stack } from "sst/constructs";
 import { BedrockKnowledgeBase } from "bedrock-agents-cdk";
 import * as iam from "aws-cdk-lib/aws-iam";
-import * as s3 from "aws-cdk-lib/aws-s3";
-import * as s3n from "aws-cdk-lib/aws-s3-notifications";
-// import { KnowledgeBaseStack } from "./KnowledgeStack";
 import { MyStack } from "./OpenSearchStack";
-// import { S3EventSource } from "aws-cdk-lib/aws-lambda-event-sources"; // Import EventSource for S3 trigger
-// import { EventType } from "aws-cdk-lib/aws-s3"; // Import Bucket from AWS CDK
-// import { Token } from "aws-cdk-lib";
-// import * as sst from "@serverless-stack/resources";
 import { StorageStack } from "./StorageStack";
 
-
- 
 export function BedrockKbLambdaStack({ stack }: StackContext) {
-  const { materialsBucket: bucket } = use(StorageStack);
-
-
-  const s3BucketArn = bucket.bucketArn;
+  const { materialsBucket, syncKnowledgeBase } = use(StorageStack);
   const { collectionArn, customResource } = use(MyStack);
 
-  if (!customResource)
-  {
+  if (!customResource) {
     throw new Error("Custom Resource not found");
   }
 
-  // or should we do a while loop to wait for the custom resource to be created? NAIVE IMPLEMENTATION
-  // while (!customResource) {
-  //   console.log("Waiting for custom resource to be created...");
-  //   delay(1000);
-  //   customResource = use(MyStack).customResource;
-  // }
+  const s3BucketArn = materialsBucket.bucketArn;
  
   const bedrockKbRole = new iam.Role(stack, "bedrock-kb-role", {
     roleName: `AmazonBedrockExecutionRoleForKnowledgeBase_bkb-${stack.stage}`,
@@ -80,7 +62,7 @@ export function BedrockKbLambdaStack({ stack }: StackContext) {
             actions: [
               "aoss:APIAccessAll",
             ],
-            resources: [collectionArn], // Scoped to the specific collection ARN
+            resources: [collectionArn],
           }),
         ],
       }),
@@ -110,25 +92,15 @@ export function BedrockKbLambdaStack({ stack }: StackContext) {
       },
     },
   });
- // Add IAM permissions for the Lambda function
- const syncKnowledgeBaseFunction = new Function(stack, "SyncKnowledgeBase", {
-  handler: "packages/functions/src/SyncKB.handler",
-  environment: {
-    KNOWLEDGE_BASE_ID: bedrockKb.knowledgeBaseId,
-    DATA_SOURCE_ID: bedrockKb.dataSourceId,
-  },
-  permissions: [
-    "bedrock:StartIngestionJob",    // Permission to start ingestion jobs in Bedrock
-  ],
-});
 
-// Add an S3 trigger to the Lambda function
-bucket.cdk.bucket.addEventNotification(s3.EventType.OBJECT_CREATED, new s3n.LambdaDestination(syncKnowledgeBaseFunction));
+  // Add environment variables to the sync function after the KB is created
+  syncKnowledgeBase.addEnvironment("KNOWLEDGE_BASE_ID", bedrockKb.knowledgeBaseId);
+  syncKnowledgeBase.addEnvironment("DATA_SOURCE_ID", bedrockKb.dataSourceId);
  
   stack.addOutputs({
     KNOWLEDGE_BASE_ID: bedrockKb.knowledgeBaseId,
     DATA_SOURCE_ID: bedrockKb.dataSourceId,
   });
 
-  return { bedrockKbRole, bedrockKb }
+  return { bedrockKbRole, bedrockKb };
 }
