@@ -1,18 +1,11 @@
 import { BedrockAgentClient, StartIngestionJobCommand } from "@aws-sdk/client-bedrock-agent";
 import { SNSEvent } from 'aws-lambda';
+import { v4 as uuidv4 } from "uuid";
  
 export async function handler(event: any) {
  
-  const knowledgeBaseId = process.env.KNOWLEDGE_BASE_ID;
-  const dataSourceId = process.env.DATA_SOURCE_ID;
-
-  if (!knowledgeBaseId || !dataSourceId) {
-    console.error("KNOWLEDGE_BASE_ID or DATA_SOURCE_ID is not defined in environment variables.");
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ message: "Lambda function is not configured properly." }),
-    };
-  }
+  const knowledgeBaseId = "WCTC0NYEAV";
+  const dataSourceId = "YPKLO8CFFH";
  
   // Create a client for Bedrock Agent
   const client = new BedrockAgentClient({ region: "us-east-1" });
@@ -23,8 +16,8 @@ export async function handler(event: any) {
   // Define the input for the StartIngestionJobCommand
   const input = {
     knowledgeBaseId: knowledgeBaseId, // Knowledge Base ID
-    dataSourceId: dataSourceId, // Data Source ID
-    clientToken: clientToken, // Unique client token
+    dataSourceId: dataSourceId,
+    clientToken: uuidv4() // Unique client token
     description: "Syncing knowledge base data from S3", // Description of the ingestion job
   };
  
