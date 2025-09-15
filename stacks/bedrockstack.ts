@@ -123,7 +123,7 @@ export function BedrockKbLambdaStack({ stack }: StackContext) {
 });
 
 // Add an S3 trigger to the Lambda function
-bucket.addEventNotification(s3.EventType.OBJECT_CREATED, new s3n.LambdaDestination(syncKnowledgeBaseFunction));
+bucket.cdk.bucket.addEventNotification(s3.EventType.OBJECT_CREATED, new s3n.LambdaDestination(syncKnowledgeBaseFunction));
  
   stack.addOutputs({
     KNOWLEDGE_BASE_ID: bedrockKb.knowledgeBaseId,
