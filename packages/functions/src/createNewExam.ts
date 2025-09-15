@@ -28,7 +28,6 @@ const bedrockClient = new BedrockRuntimeClient({ region: "us-east-1" });
 const modelId = "anthropic.claude-3-5-sonnet-20240620-v1:0";
 
 export async function createExam(event) {
-  console.log("📩 createExam triggered", JSON.stringify(event));
   if (!client || !dynamo) { 
     console.log("Error with DynamoDB client");
   }
@@ -51,7 +50,6 @@ export async function createExam(event) {
   let statusCode = 200;
   const headers = {
     "Content-Type": "application/json",
-    "X-Content-Type-Options": "nosniff",
   };
 
   let prompt = "";
@@ -76,26 +74,16 @@ export async function createExam(event) {
 
       let existingExam;
      
-      //existingExam = JSON.parse(result.Item.examContent);
-      existingExam = typeof result.Item.examContent === "string"
-      ? JSON.parse(result.Item.examContent)
-      : result.Item.examContent;
-
+        existingExam = JSON.parse(result.Item.examContent);
      
-      const cleanedFeedback = data.feedback.map(item => ({
-        section: item.section,
-        feedback: typeof item.feedback === 'string' ? item.feedback : JSON.stringify(item.feedback)
-      }));
 
-      
 
        // Build prompt to update exam content
       if (data.feedback) {
           prompt = `
           Update the following exam based on the feedback provided.
           Ensure that all related information is recalculated to maintain consistency.
-
-          Feedback: ${JSON.stringify(cleanedFeedback, null , 2)}
+          Feedback: ${JSON.stringify(data.feedback, null , 2)}
           
           Current Exam Content:
           ${JSON.stringify(existingExam, null, 2)}
@@ -136,61 +124,18 @@ export async function createExam(event) {
       const response = await bedrockClient.send(command);
 
       //@ts-ignore
-      //const responseText = response.output.message.content[0].text;
-      //console.log("Updated Exam Content:", responseText);
-      const fullText = response.output.message.content[0].text;
-      
-      // حدد أول `{` وآخر `}`
-      const jsonStart = fullText.indexOf('{');
-      const jsonEnd = fullText.lastIndexOf('}');
-      
-      if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
-        throw new Error("❌ Failed to extract JSON: Missing or invalid braces");
-      }
-      
-      // استخرج النص بين الأقواس
-     /* const cleanedJson = fullText.slice(jsonStart, jsonEnd + 1).trim();
-      
-      let parsed;
-      try {
-        parsed = JSON.parse(cleanedJson);
-      } catch (err) {
-        console.error("❌ Invalid JSON returned from model:", cleanedJson);
-        throw new Error("Returned content is not valid JSON. Model response: " + cleanedJson);
-      }
-      */
-      const cleanedJson = fullText.slice(jsonStart, jsonEnd + 1).trim();
-
-      // تحقق إضافي قبل JSON.parse
-      if (
-        cleanedJson.includes("[object Object]") ||
-        !cleanedJson.startsWith("{") ||
-        !cleanedJson.endsWith("}")
-      ) {
-        console.error("❌ Model response is not valid JSON:", cleanedJson);
-        throw new Error("Model response is not valid JSON: " + cleanedJson);
-      }
-      
-      let parsed;
-      try {
-        parsed = JSON.parse(cleanedJson);
-      } catch (err) {
-        console.error("❌ Invalid JSON returned from model:", cleanedJson);
-        throw new Error("Returned content is not valid JSON. Model response: " + cleanedJson);
-      }
-
+      const responseText = response.output.message.content[0].text;
+      console.log("Updated Exam Content:", responseText);
 
       await dynamo.send(
         new UpdateCommand({
           TableName: tableName,
           Key: { examID: data.examID },
           UpdateExpression:
-            "SET examContent = :examContent, numOfRegenerations = if_not_exists(numOfRegenerations, :zero) + :incr, contributors = :contributors",
-            
+            "SET examContent = :examContent, numOfRegenerations = numOfRegenerations + :incr, contributors = :contributors",
           ExpressionAttributeValues: {
-            ":examContent": parsed,
+            ":examContent": responseText,
             ":incr": 1,
-            ":zero": 0,
             ":contributors": data.contributors,
           },
         })
@@ -199,47 +144,101 @@ export async function createExam(event) {
 
     //const response = await bedrockClient.send(command);
 
-      body = { message: "Exam successfully regenerated", updatedExamContent: cleanedJson };
+      body = { message: "Exam successfully regenerated", updatedExamContent: responseText };
     } catch (error) {
       console.error("Error regenerating exam:", error);
       statusCode = 500;
       body = { error: "Failed to regenerate exam", details: error.message };
-       console.log("🔥 Error Stack:", error.stack); 
     }
-
   } else {
     // Create a new exam
     try {
       if (data.subject === "ARAB101") {
-        prompt = ARAB101PROMPT;
+        const bedrockAgentClient = new BedrockAgentRuntimeClient({
+          region: "us-east-1",
+        });
+        let retrieveCommand = new RetrieveCommand({
+          knowledgeBaseId: knowledgeBaseId ?? "EU3Z7J6SG6",
+          retrievalConfiguration: {
+            vectorSearchConfiguration: {
+              numberOfResults: 10,
+              filter: {
+                equals: {
+                  key: "language",
+                  value: "ar",
+                },
+              },
+            },
+          },
+          retrievalQuery: {
+            text: `أسئلة ومواضيع امتحان لـ ${data.subject} ${data.class}`,
+          },
+        });
+
+        const retrievalResults = (
+          await bedrockAgentClient.send(retrieveCommand)
+        ).retrievalResults;
+
+        if (!retrievalResults || retrievalResults.length === 0) {
+          return {
+            statusCode: 400,
+            body: JSON.stringify({
+              error: "Could not generate exam.",
+              message:
+                "There is not enough Arabic material in the knowledge base for the selected subject. Please upload more materials.",
+            }),
+            headers,
+          };
+        }
+
+        const relevant_info = retrievalResults
+          .map((e) => e.content?.text)
+          .join("\n\n");
+
+        prompt = `${ARAB101PROMPT}\n\nاستخدم المواد التالية لتوليد محتوى لهيكل الامتحان المحدد أعلاه:\n\n${relevant_info}`;
       } else {
         const bedrockAgentClient = new BedrockAgentRuntimeClient({
           region: "us-east-1",
         });
         let retrieveCommand = new RetrieveCommand({
-           knowledgeBaseId: knowledgeBaseId ?? "WCTC0NYEAV", //Add ur KB ID...
+          knowledgeBaseId: knowledgeBaseId ?? "EU3Z7J6SG6",
           retrievalConfiguration: {
             vectorSearchConfiguration: {
               numberOfResults: 10,
+              filter: {
+                equals: {
+                  key: "language",
+                  value: "en",
+                },
+              },
             },
           },
           retrievalQuery: {
-            text: `${data.class} ${data.subject} questions`,
+            text: `Exam questions and topics for ${data.subject} ${data.class}`,
           },
         });
 
-        if (!data.customize) {
-          const relevant_info = (
-            await bedrockAgentClient.send(retrieveCommand)
-          ).retrievalResults
-            ?.map((e) => e.content?.text)
-            .join("\n")
-            .toString();
-          prompt =
-            ENG102PROMPT +
-            " Refer to the following relevant information from past exams:" +
-            relevant_info;
+        const retrievalResults = (
+          await bedrockAgentClient.send(retrieveCommand)
+        ).retrievalResults;
+
+        if (!retrievalResults || retrievalResults.length === 0) {
+          return {
+            statusCode: 400,
+            body: JSON.stringify({
+              error: "Could not generate exam.",
+              message:
+                "There is not enough English material in the knowledge base for the selected subject. Please upload more materials.",
+            }),
+            headers,
+          };
         }
+
+        const relevant_info = retrievalResults
+          .map((e) => e.content?.text)
+          .join("\n\n");
+
+        prompt = `${ENG102PROMPT}\n\nUse the following materials to generate the content for the exam structure defined above:\n\n${relevant_info}`;
       }
       
 
@@ -259,39 +258,19 @@ export async function createExam(event) {
 
     console.log("Prompt built");
 
-    let cleanedJson = "";
-    
-    try {
-      const response = await bedrockClient.send(command);
-      
-      const content = response?.output?.message?.content;
-      
-      if (!content || !content[0]?.text) {
-        throw new Error("Invalid response from Bedrock model – missing content");
-      }
-    
-      cleanedJson = content[0].text;
-    
-      console.log("Response from Bedrock:", cleanedJson);
-    } catch (error) {
-      console.error("Bedrock model error:", error);
-      statusCode = 500;
-      body = { error: "Failed to generate exam content", details: error.message || "Unknown error" };
-      return {
-        statusCode,
-        headers,
-        body: JSON.stringify(body)
-      };
-    }
+    const response = await bedrockClient.send(command);
 
+    // Extract and print the response text.
+    //@ts-ignore
+    const responseText = response.output.message.content[0].text;
+
+    console.log(responseText)
 
     console.log("Model done");
     //@ts-ignore
-    console.log("cleanedJson size:", Buffer.byteLength(cleanedJson, "utf-8"));
-    console.log("🧠 Item size in bytes:", Buffer.byteLength(JSON.stringify));
+    console.log("ResponseText size:", Buffer.byteLength(responseText, "utf-8"));
 
-
-      const uuid = uuidv4()
+      const uuid = uuidv4();
       await dynamo.send(
         new PutCommand({
           TableName: tableName,
@@ -303,7 +282,7 @@ export async function createExam(event) {
             examSemester: data.semester,
             examDuration: data.duration,
             examMark: data.total_mark,
-            examContent: typeof cleanedJson === "string" ? cleanedJson : JSON.stringify(cleanedJson),
+            examContent: responseText,
             createdBy: data.created_by,
             creationDate: data.creation_date,
             contributors: data.contributors,
@@ -319,19 +298,10 @@ export async function createExam(event) {
       body = { error: "Failed to create exam", details: error.message };
     }
   }
-  if (!body) {
-  statusCode = 500;
-  body = { error: "Unexpected server error. No response body." };
-}
 
- return {
-  statusCode,
-  headers: {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Headers": "*",
-    "Content-Type": "application/json",
-    "X-Content-Type-Options": "nosniff",
-  },
-  body: JSON.stringify(body),
-};
-} 
+  return {
+    statusCode,
+    body: JSON.stringify(body),
+    headers,
+  };
+}
