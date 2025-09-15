@@ -1,6 +1,8 @@
 import { StackContext, Function, use, Stack } from "sst/constructs";
 import { BedrockKnowledgeBase } from "bedrock-agents-cdk";
 import * as iam from "aws-cdk-lib/aws-iam";
+import * as s3 from "aws-cdk-lib/aws-s3";
+import * as s3n from "aws-cdk-lib/aws-s3-notifications";
 // import { KnowledgeBaseStack } from "./KnowledgeStack";
 import { MyStack } from "./OpenSearchStack";
 // import { S3EventSource } from "aws-cdk-lib/aws-lambda-event-sources"; // Import EventSource for S3 trigger
@@ -41,7 +43,7 @@ export function BedrockKbLambdaStack({ stack }: StackContext) {
             effect: iam.Effect.ALLOW,
             actions: ["bedrock:InvokeModel"],
             resources: [
-                   "arn:aws:bedrock:us-east-1::foundation-model/*",
+              "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v1",
             ],
           }),
         ],
@@ -108,28 +110,20 @@ export function BedrockKbLambdaStack({ stack }: StackContext) {
       },
     },
   });
- 
-
-
  // Add IAM permissions for the Lambda function
-//  const syncKnowledgeBaseFunction = new Function(stack, "SyncKnowledgeBase", {
-//   handler: "packages/functions/src/SyncKB.handler",
-//   environment: {
-//     KNOWLEDGE_BASE_ID: bedrockKb.knowledgeBaseId,
-//     DATA_SOURCE_ID: bedrockKb.dataSourceId,
-//   },
-//   permissions: [
-//     "bedrock:StartIngestionJob",    // Permission to start ingestion jobs in Bedrock
-//     "s3:GetObject",  
-//     "aoss:CreateDocument",
-//     "aoss:ReadDocument",
-//   ],
-// });
+ const syncKnowledgeBaseFunction = new Function(stack, "SyncKnowledgeBase", {
+  handler: "packages/functions/src/SyncKB.handler",
+  environment: {
+    KNOWLEDGE_BASE_ID: bedrockKb.knowledgeBaseId,
+    DATA_SOURCE_ID: bedrockKb.dataSourceId,
+  },
+  permissions: [
+    "bedrock:StartIngestionJob",    // Permission to start ingestion jobs in Bedrock
+  ],
+});
 
-// Add an S3 trigger to the Lambda function (currently gives cyclic dependency error)
-// syncKnowledgeBaseFunction.addEventSource(new S3EventSource(bucket, {
-//   events: [EventType.OBJECT_CREATED]
-// }) as any);
+// Add an S3 trigger to the Lambda function
+bucket.addEventNotification(s3.EventType.OBJECT_CREATED, new s3n.LambdaDestination(syncKnowledgeBaseFunction));
  
   stack.addOutputs({
     KNOWLEDGE_BASE_ID: bedrockKb.knowledgeBaseId,
