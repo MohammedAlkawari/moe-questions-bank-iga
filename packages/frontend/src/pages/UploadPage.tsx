@@ -8,7 +8,6 @@ const UploadPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [language, setLanguage] = useState("en"); // Default to English
 
   const handleSingleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     setError(null);
@@ -47,8 +46,8 @@ const UploadPage: React.FC = () => {
 
       // Upload each file
       for (const file of selectedFiles) {
-        await uploadToS3(file, language);
-        console.log(`File uploaded to S3 with language ${language}:`, file.name);
+        await uploadToS3(file);
+        console.log("File uploaded to S3:", file.name);
       }
 
       setSuccessMessage("All files have been uploaded successfully!");
@@ -68,27 +67,6 @@ const UploadPage: React.FC = () => {
       <h1 className="title">Upload Course Material</h1>
       <p className="subtitle">Select files or folder to upload</p>
       <form onSubmit={handleSubmit} className="upload-form">
-        <div className="language-selector">
-          <p>Select material language:</p>
-          <label>
-            <input
-              type="radio"
-              value="en"
-              checked={language === "en"}
-              onChange={(e) => setLanguage(e.target.value)}
-            />
-            English
-          </label>
-          <label>
-            <input
-              type="radio"
-              value="ar"
-              checked={language === "ar"}
-              onChange={(e) => setLanguage(e.target.value)}
-            />
-            Arabic
-          </label>
-        </div>
         <div className="input-div">
           <label htmlFor="singleFileInput" className="file-label">
             <input
@@ -166,7 +144,7 @@ const UploadPage: React.FC = () => {
   );
 };
 
-async function uploadToS3(file: File, language: string) {
+async function uploadToS3(file: File) {
   const fileExtension = file.name.split(".").pop();
   const fileType = file.type;
   const filePath = file.webkitRelativePath.substring(0, file.webkitRelativePath.lastIndexOf("/"));
@@ -186,7 +164,6 @@ async function uploadToS3(file: File, language: string) {
       extension: fileExtension,
       name: file.name,
       path: filePath,
-      language: language,
     },
   });
 
@@ -200,7 +177,10 @@ async function uploadToS3(file: File, language: string) {
     method: "PUT",
     body: file,
   });
-
+      //Added by MohamedAli
+    console.log("Upload status:", response.status);
+    console.log("Upload result:", await response.text());   
+  
   if (!response.ok) {
     throw new Error(`Failed to upload file: ${file.name}`);
   }
