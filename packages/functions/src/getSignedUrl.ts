@@ -37,9 +37,6 @@ export async function getUploadLink(event: APIGatewayProxyEvent) {
       Bucket: process.env.BUCKET_NAME,
       Key,
       ContentType: fileType,
-    Metadata: {
-      language: queryParams.language || "en", // Default to 'en' if not provided
-    },
     };
 
     const uploadUrl = await getSignedUrl(s3, new PutObjectCommand(s3Params), {
